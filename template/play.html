@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>play</title>
+    <link rel="stylesheet" href="/assets/style.css" />
+  </head>
+  <body>
+      <header>
+        <a href="/" class="header_button home-button">Home</a>
+        <a href="https://github.com/khsadira/n-puzzle" class="header_button github-button">View on GitHub</a>
+      </header>
+  <div class="gg-screen-div" style="display: none;">
+    <p class="gg-screen-p" style="text-align: center;font-size:xx-large;"></p>
+  </div>
+  <div class="view-screen" style="display: block;">
+  <br>
+    <div class="puzzle-name">{{.ID}}</div>
+    <div class="puzzle"></div>
+  <br>
+  </div>
+</body>
+
+<script>
+  var count = 0;
+
+  function getArray() {
+    var array = []
+      {{range .TaquinStruct.Taquin}}
+        {{range .}}
+        array.push({{.}})
+        {{end}}
+      {{end}}
+      return array
+  }
+
+
+  function printPuzzle(array) {
+    var elements = document.getElementsByClassName("puzzle")
+    var ul = document.createElement('ul')
+
+    ul.className = "n-puzzle"
+    for (var i = 0; i < array.length; i++) {
+      var li = document.createElement('li');
+      li["index"]=i
+      li.innerText = array[i]
+      li.onclick = function() {
+        moveCase(this.parentNode , this.innerText, this["index"])
+      }
+      ul.appendChild(li)
+    }
+    elements[0].appendChild(ul)
+  }
+
+  function setPuzzleSize() {
+    var size = {{.TaquinStruct.Size}} * 90 + 10
+    var elements = document.getElementsByClassName("puzzle");
+
+    for (var i = 0; i < elements.length; i++) {
+          elements[i].style.width=(size+"px");
+          elements[i].style.height=(size+"px");
+    }
+  }
+
+  function setClass() {
+    var elements = document.getElementsByClassName("n-puzzle");
+    for (var i = 0; i < elements.length; i++) {
+      var childs = elements[i].getElementsByTagName('li')
+      for (var j = 0; j < childs.length; j++) {
+        var correct = j + 1 == childs[j].innerText;
+        var cssClass = childs[j].innerText == 0 ? "empty" : (correct ? "correct" : "incorrect");
+        childs[j].className=cssClass
+      }
+    }
+  }
+
+  function printTaquin(array) {
+    printPuzzle(array)
+    setPuzzleSize()
+    setClass()
+  }
+
+  function erasePuzzle() {
+    var element = document.getElementsByTagName("ul");
+
+    for (var index = element.length - 1; index >= 0; index--) {
+        element[index].parentNode.removeChild(element[index]);
+    }
+  }
+
+  function isValid(array) {
+    var isValid = 0
+    for (var i = 0; i < array.length; i++) {
+          if (i + 1 != array[i] && array[i] != 0) {
+            isValid = 1
+        }
+    }
+    if (isValid == 1) {
+      return false
+    }
+    return true
+  }
+
+  function moveCase(parent, id, index) {
+    var elements = parent.getElementsByTagName('li')
+    var size = Math.sqrt(parent.getElementsByTagName('li').length)
+    var array = []
+
+    for (var i = 0; i < elements.length; i++) {
+      array.push(elements[i].innerText)
+    }
+
+    if (array[index] != 0) {
+      var target = -1
+      
+      if (index - 1 >= 0 && index % size != 0 && array[index - 1] == 0) { // 0 is left
+        target = index -1
+      } else if (index + 1 < array.length && index % size != size - 1 && array[index + 1] == 0) { // 0 is right
+        target = index + 1
+      } else if (index - size >= 0 && array[index - size] == 0) { // 0 is up
+        target = index - size
+      } else if (index + size < array.length && array[index + size] == 0) { // 0 is down
+        target = index + size
+      }
+      
+      if (target != -1) {
+        count++
+        var tmp = array[target]
+        array[target] = array[index]
+        array[index] = tmp
+
+
+        if (isValid(array)) {
+          document.getElementsByClassName("view-screen")[0].style.display = "none"
+          document.getElementsByClassName("gg-screen-div")[0].style.display = "block"
+          document.getElementsByClassName("gg-screen-p")[0].innerText = "WELL PLAYED ! You solved the puzzle in " + count + " moves"
+        } else {
+          erasePuzzle()
+          printTaquin(array)
+        }
+      }
+
+    }
+  }
+
+  window.onload = function() {
+    var firstArray = getArray()
+    
+    if (isValid(firstArray)) {
+          document.getElementsByClassName("view-screen")[0].style.display = "none"
+          document.getElementsByClassName("gg-screen-div")[0].style.display = "block"
+          document.getElementsByClassName("gg-screen-p")[0].innerText = "The puzzle is already solved."
+        } else {
+          printTaquin(firstArray)
+        }
+  }
+
+</script>
+</html>
